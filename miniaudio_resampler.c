@@ -74,10 +74,12 @@ static int miniaudio_resampler_destroy(void* user_data) {
 
 static void miniaudio_resampler_set_config(void* user_data, const RVConvertConfig* format) {
     MiniaudioResampler* data = (MiniaudioResampler*)user_data;
+    /*
     // check if the format is the same then we don't need to set anything up
     if (memcmp(&data->cfg, format, sizeof(RVConvertConfig)) == 0 && data->is_init) {
         return;
     }
+    */
 
     ma_result res;
 
@@ -85,6 +87,7 @@ static void miniaudio_resampler_set_config(void* user_data, const RVConvertConfi
         ma_data_converter_uninit(&data->converter, NULL);
     }
 
+    data->cfg = ma_data_converter_config_init_default();
     data->cfg.formatIn = s_format_convert[format->input.audio_format];
     data->cfg.channelsIn = format->input.channel_count;
     data->cfg.sampleRateIn = format->input.sample_rate;
@@ -107,6 +110,12 @@ uint32_t miniaudio_resampler_convert(void* user_data, void* output_data, void* i
     ma_result res = 0;
     ma_uint64 frame_count_in = input_frame_count;
     ma_uint64 frame_count_out = 0;
+
+    if ((res = ma_data_converter_get_expected_output_frame_count(&data->converter, input_frame_count,
+                                                                 &frame_count_out)) != MA_SUCCESS) {
+        rv_fatal("Miniaudio resampler: Unable to get_exepected_output_frame_count error: %d", res);
+        return 0;
+    }
 
     if ((res = ma_data_converter_process_pcm_frames(&data->converter, input_data, &frame_count_in, output_data,
                                                     &frame_count_out)) != MA_SUCCESS) {
@@ -135,6 +144,21 @@ static uint32_t miniaudio_resampler_get_expected_output_frame_count(void* user_d
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static uint32_t miniaudio_resampler_get_required_input_frame_count(void* user_data, uint32_t frame_count) {
+    MiniaudioResampler* data = (MiniaudioResampler*)user_data;
+    ma_result res = 0;
+    ma_uint64 count = 0;
+
+    if ((res = ma_data_converter_get_required_input_frame_count(&data->converter, frame_count, &count)) != MA_SUCCESS) {
+        rv_fatal("Miniaudio resampler: Unable to get_required_input_frame_count error: %d", res);
+        return 0;
+    }
+
+    return (uint32_t)count;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void miniaudio_resampler_static_init(const RVService* service_api) {
     g_rv_log = RVService_get_log(service_api, RV_LOG_API_VERSION);
 
@@ -158,6 +182,7 @@ static RVResamplePlugin s_miniaudio_resample_plugin = {
     miniaudio_resampler_set_config,
     miniaudio_resampler_convert,
     miniaudio_resampler_get_expected_output_frame_count,
+    miniaudio_resampler_get_required_input_frame_count,
     miniaudio_resampler_static_init,
 };
 
