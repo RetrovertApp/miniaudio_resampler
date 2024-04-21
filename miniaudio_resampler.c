@@ -172,6 +172,12 @@ static void miniaudio_resampler_static_init(const RVService* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static RVSettingsUpdate miniaudio_resampler_settings_updated(void* user_data, const RVSettings* settings) {
+    return RVSettingsUpdate_Default;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static RVResamplePlugin s_miniaudio_resample_plugin = {
     RV_RESAMPLE_PLUGIN_API_VERSION,
     PLUGIN_NAME,
@@ -184,6 +190,7 @@ static RVResamplePlugin s_miniaudio_resample_plugin = {
     miniaudio_resampler_get_expected_output_frame_count,
     miniaudio_resampler_get_required_input_frame_count,
     miniaudio_resampler_static_init,
+    miniaudio_resampler_settings_updated,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
