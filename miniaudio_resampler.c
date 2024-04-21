@@ -175,8 +175,8 @@ static void miniaudio_resampler_static_init(const RVService* service_api) {
 static RVResamplePlugin s_miniaudio_resample_plugin = {
     RV_RESAMPLE_PLUGIN_API_VERSION,
     PLUGIN_NAME,
-    "0.0.1",
-    "0.11.9",
+    "0.0.2",
+    "0.11.21",
     miniaudio_resampler_create,
     miniaudio_resampler_destroy,
     miniaudio_resampler_set_config,
